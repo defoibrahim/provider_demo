@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:provider_demo/model/productModel.dart';
+
+import 'controller/AuthProvider.dart';
+import 'controller/ProductsProvider.dart';
 
 void main() {
   runApp(MyApp());
@@ -8,60 +13,66 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ProductsProvider>(
+          create: (context) => ProductsProvider(),
+        ),
+        ChangeNotifierProvider<AuthProvider>(
+          create: (context) => AuthProvider(),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: MyHomePage(),
       ),
-      home: MyHomePage(title: 'provider Demo '),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
+class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text("Provider Test"),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
+        child: Consumer<ProductsProvider>(
+          builder: (context, prod, child) {
+            return ListView.builder(
+                itemCount: prod.myList.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    child: Column(
+                      children: <Widget>[
+                        Text(prod.myList[index].name,
+                            style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.bold)),
+                        Image.asset("${prod.myList[index].imageUrl}"),
+                        RaisedButton(
+                          color: Theme.of(context).accentColor,
+                          child: Text("Delete"),
+                          onPressed: () => Provider.of<ProductsProvider>(
+                                  context,
+                                  listen: false)
+                              .removeProduct(index),
+                        )
+                      ],
+                    ),
+                    margin: EdgeInsets.only(bottom: 8, left: 16, right: 16),
+                  );
+                });
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: Provider.of<ProductsProvider>(context).addProduct,
         tooltip: 'Increment',
         child: Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
